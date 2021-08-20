@@ -7,23 +7,24 @@ from src.sql.database import engine, SessionLocal
 
 models.Base.metadata.create_all(bind=engine)
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 try:
     args = sys.argv
 
-    if args[1] == "BOT":
-        telegram.start_bot()
-    
-    elif args[1] == "SHOPEE":
-        crud.create_items(get_db())
+    if args[1].upper() == "BOT":
 
+        if args[2].upper() == "TELEGRAM":
+            telegram.start_bot()
+
+        else:
+            print("Invalid BOT Args")
+    
+    elif args[1].upper() == "EXTRACT":
+
+        if args[2].upper() == "SHOPEE":
+            crud.create_items(SessionLocal())
+
+        else:
+            print("Invalid EXTRACT Args")
     else:
         print("Invalid Args")
 
