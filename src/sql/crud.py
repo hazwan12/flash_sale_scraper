@@ -32,7 +32,7 @@ def create_items(db : Session):
                         item_original_price = j["original_price"],
                         item_discount_price = j["discounted_price"], 
                         item_url = j["url"],
-                        item_sale_time = j["sale_time"],
+                        item_sale_time = i["sale_time"],
                     )
 
                 db.merge(item)
@@ -43,6 +43,7 @@ def create_items(db : Session):
             finally:
                 db.commit()
 
+    db.close()
 
 def create_user(db : Session, username : str):
     db_user = models.User(username=username)
@@ -52,8 +53,13 @@ def create_user(db : Session, username : str):
 
     return db_user
 
-def get_item_keyword(db : Session, search_keyword : str):
-    return db.query(models.Item).filter(models.Item.item_name.contains(search_keyword)).all()
+def get_item(db : Session, search_keyword : str = None):
+    item = db.query(models.Item)
+
+    if search_keyword:
+        item = item.filter(models.Item.item_name.contains(search_keyword))
+
+    return item.all()
 
 def get_reminders(db : Session, username : str):
     return db.query(models.Reminder).filter(models.Reminder.username == username).all()
