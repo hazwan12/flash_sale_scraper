@@ -1,12 +1,13 @@
 from .database import Base
 
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, String, Integer, Boolean
 from sqlalchemy.orm import relationship
 
 class User(Base):
     __tablename__ = "users"
 
     username = Column(String, primary_key=True, index=True)
+    chat_id = Column(String)
 
 class Item(Base):
     __tablename__ = "items"
@@ -23,3 +24,5 @@ class Reminder(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String)
+    active = Column(Boolean)
+    keyword = Column(String)
