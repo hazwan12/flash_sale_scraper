@@ -18,7 +18,7 @@ try:
         else:
             print("Invalid BOT Args")
     
-    elif args[1].upper() == "EXTRACT":
+    elif args[1].upper() == "SCRAPE":
 
         if args[2].upper() == "SHOPEE":
             crud.create_items(SessionLocal())
