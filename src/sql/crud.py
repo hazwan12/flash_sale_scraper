@@ -1,6 +1,7 @@
 from . import models
 from ..extractor import Shopee
 
+import datetime
 from sqlalchemy.orm import Session
 
 def create_items(db : Session):
@@ -45,16 +46,21 @@ def create_items(db : Session):
 
     db.close()
 
-def create_user(db : Session, username : str):
-    db_user = models.User(username=username)
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+def create_user(db : Session, username : str, chat_id : int):
+    user = db.query(models.User).filter(models.User.username == username).all()
 
-    return db_user
+    if len(user) > 0:
+        db_user = models.User(username=username, chat_id=chat_id)
+        db.merge(db_user)
+        db.commit()
+
+def create_reminder(db : Session, username : str, keyword : str):
+    db_reminder = models.Reminder(username=username, active=True, keyword=keyword)
+    db.merge(db_reminder)
+    db.commit()
 
 def get_item(db : Session, search_keyword : str = None):
-    item = db.query(models.Item)
+    item = db.query(models.Item).filter(models.Item.item_sale_time >= str(datetime.datetime.now()))
 
     if search_keyword:
         item = item.filter(models.Item.item_name.contains(search_keyword))
@@ -62,5 +68,8 @@ def get_item(db : Session, search_keyword : str = None):
     return item.all()
 
 def get_reminders(db : Session, username : str):
-    return db.query(models.Reminder).filter(models.Reminder.username == username).all()
+    return db.query(models.Reminder)\
+            .filter(models.Reminder.active == True)\
+            .filter(models.Reminder.username == username)\
+            .all()
 
