@@ -20,14 +20,9 @@ def create_items(db : Session):
 
                 # If exist update the discount price
                 if existing_item:
-                    item = models.Item(
-                        item_name = existing_item.item_name, 
-                        item_original_price = existing_item.item_original_price, 
-                        item_discount_price = j["discounted_price"], 
-                        item_url = existing_item.item_url, 
-                        item_sale_time = existing_item.item_sale_time
-                    )
-                
+                    item = existing_item
+                    item.item_discount_price = j["discounted_price"]
+                    
                 else:
                     item = models.Item(
                         item_name = j["name"],
