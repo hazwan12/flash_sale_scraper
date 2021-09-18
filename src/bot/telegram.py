@@ -1,4 +1,5 @@
 import os
+import datetime
 import logging
 from dotenv import load_dotenv
 
@@ -45,7 +46,7 @@ Name : {} \nOriginal Price : {} \nDiscount Price : {} \nSale Time : {} \nLink : 
                 """.format(item.item_name, item.item_original_price, item.item_discount_price, item.item_sale_time, item.item_url)
                 
                 current_time = utils.get_datetime_tz()
-                sale_time = get_datetime_from_str(item.item_sale_time)
+                sale_time = utils.get_datetime_from_str(item.item_sale_time)
                 
                 if sale_time > current_time and current_time < sale_time + datetime.timedelta(hours=1):
                     context.bot.send_message(chat_id=context.job.context, text=text)
@@ -66,7 +67,11 @@ Welcome to the Flash Sales Bot {}
     """.format(username)
 
     context.bot.send_message(chat_id=chat_id, text=start_message)
-    context.job_queue.run_repeating(callback=sale_reminder, interval=3600, context=chat_id, first=utils.get_nearest_hour_add_10mins())
+
+    active_jobs = context.job_queue.get_jobs_by_name(chat_id)
+    
+    if not active_jobs:
+        context.job_queue.run_repeating(callback=sale_reminder, interval=3600, name=str(chat_id), context=chat_id, first=utils.get_nearest_hour_add_10mins())
 
     return MAIN_SELECTION
 
