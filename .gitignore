@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 
 *.db
+
+# VS Code
+.vscode/
