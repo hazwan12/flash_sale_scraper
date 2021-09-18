@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext, CallbackQueryHandler
 
+from .. import utils
+
 from ..sql import crud
 from ..sql.database import SessionLocal
 
@@ -17,13 +19,10 @@ load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# Meta states
-STOPPING = map(chr, range(1))
-
 MAIN_SELECTION, REMINDER_SELECTION = map(chr, range(2))
 
 # Stage Definition for Top Level Conversation
-SEARCH, REMINDER, REPORT, ABOUT = map(chr, range(4))
+SEARCH, REMINDER, REPORT, ABOUT, SUPPORT = map(chr, range(5))
 
 # State Definitions for Reminder Level Conversation
 LIST_REMINDER, DISABLE_REMINDER, CREATE_REMINDER = map(chr, range(3))
@@ -32,6 +31,20 @@ KEYWORD_SEARCH, STOPPING, START_OVER= map(chr, range(3))
 
 # Shortcut for ConversationHandler.END
 END = ConversationHandler.END
+
+def sale_reminder(context: CallbackContext):
+    logger.info("Searching reminders for chat_id %s", context.job.context)
+    reminders = crud.get_reminders(SessionLocal(), context.job.context)
+
+    if len(reminders) > 0:
+        context.bot.send_message(chat_id=context.job.context, text="Reminder on Items on Sale")
+        for reminder in reminders:
+            for item in crud.get_items_on_sale(SessionLocal(), reminder.keyword):
+                text = """
+Name : {} \nOriginal Price : {} \nDiscount Price : {} \nSale Time : {} \nLink : {}
+                """.format(item.item_name, item.item_original_price, item.item_discount_price, item.item_sale_time, item.item_url)
+                
+                context.bot.send_message(chat_id=context.job.context, text=text)
 
 def start(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
@@ -45,13 +58,26 @@ Welcome to the Flash Sales Bot {}
 
 - To search items on sale enter /search
 - To manage your reminders enter /reminder
-- To report an issue enter /report
-- To learn more about this bot /about
+- To support the developer /support
     """.format(username)
 
     context.bot.send_message(chat_id=chat_id, text=start_message)
+    context.job_queue.run_repeating(callback=sale_reminder, interval=3600, context=chat_id, first=utils.get_nearest_hour_add_10mins())
 
     return MAIN_SELECTION
+
+def dummy_convo(update: Update, context: CallbackContext):
+    pass
+
+def support(update: Update, context: CallbackContext):
+    context.bot.send_photo(chat_id=update.effective_chat.id, photo=open("paynow.jpg", "rb"))
+    context.bot.send_message(chat_id=update.effective_chat.id, text="""
+Like the app? Show your appreciation by donating to my PayNow.
+Any amount helps as this will be primarily used to pay the cost hosting this.
+/back to Main Menu
+""")
+
+    return CommandHandler('back', back_to_main)
 
 def get_search_keyword(update: Update, context: CallbackContext):
     user = update.message.from_user
@@ -114,35 +140,63 @@ def set_create_reminder(update: Update, context: CallbackContext):
     user = update.message.from_user
     logger.info("User %s is creating reminder for %s", user.username, update.message.text)
 
-    crud.create_reminder(SessionLocal(), user.username, update.message.text)
-    update.message.reply_text("Reminder Created")
+    status = crud.create_reminder(SessionLocal(), user.username, update.message.text)
+    update.message.reply_text(status)
 
     return get_create_reminder(update, context)
 
 def list_reminder(update: Update, context: CallbackContext):
     user = update.message.from_user
     logger.info("User %s is listing all reminders", user.username)
-    reminders = crud.get_reminders(SessionLocal(), user.username)
+    reminders = crud.get_reminders(SessionLocal(), update.effective_chat.id)
     
     if len(reminders) > 0 :
-        text = "Below are the reminders you have set"
+        text = "Below are the active reminders for your account"
 
         for reminder in reminders:
             text += "\n - {}".format(reminder.keyword)
 
         update.message.reply_text(text)
-        update.message.reply_text("/back to Reminder Menu")
+        update.message.reply_text("""
+Please choose an option below
+    - /disable_reminder to remove an existing reminder
+    - /create_reminder to create a reminder
+    - /back to reminder menu
+        """)
     else:
-        update.message.reply_text("You seem not to have any reminders saved, please /reminder and make one")
+        update.message.reply_text("""
+There are no reminders currently for your account
+    - /create_reminder to create a reminder
+    - /back to return to the reminder menu
+        """)
 
     return REMINDER
 
-def disable_reminder(update: Update, context: CallbackContext):
+def get_disable_reminder(update: Update, context: CallbackContext):
     user = update.message.from_user
     logger.info("User %s disabling reminder", user.username)
-    update.message.reply_text("Please provide the keyword you want to disable for")
 
-    return KEYWORD_SEARCH
+    text = "No Reminders Set"
+    reminders = crud.get_reminders(SessionLocal(), update.effective_chat.id)
+    if len(reminders) > 0:
+        text = "".join(["\n - {}".format(reminder.keyword) for reminder in reminders])
+
+    update.message.reply_text("""
+Please provide the keyword you want to disable reminder for.
+Below are your active reminders: {}
+Else /back to the reminder menu
+    """.format(text))
+
+    return DISABLE_REMINDER
+
+def set_disable_reminder(update: Update, context: CallbackContext):
+    user = update.message.from_user
+    logger.info("User %s is disabling reminder for %s", user.username, update.message.text)
+
+    status = crud.disable_reminder(SessionLocal(), user.username, update.message.text)
+    update.message.reply_text(status)
+
+    return get_disable_reminder(update, context)
 
 def back_to_main(update: Update, context: CallbackContext):
     context.user_data[START_OVER] = True
@@ -155,20 +209,6 @@ def back_to_reminder(update: Update, context: CallbackContext):
     reminder(update, context)
 
     return END
-
-# def send_reminder(update: Update, context: CallbackContext):
-#     user = update.message.from_user
-#     logger.info("User %s is listing all reminders", user.username)
-#     reminders = crud.get_reminders(SessionLocal(), user.username)
-    
-#     for reminder in reminders:
-#         update.message.reply_text("Reminder on the sales ongoing for '{}'".format(reminder.keyword))
-
-#         items = crud.get_item(SessionLocal(), reminder.keyword)
-#         for item in items:
-#             update.message.reply_text("""
-#                 Name : {} \nOriginal Price : {} \nDiscount Price : {} \nSale Time : {} \nLink : {}
-#             """.format(item.item_name, item.item_original_price, item.item_discount_price, item.item_sale_time, item.item_url,))
 
 def stop(update: Update, context: CallbackContext) -> int:
     """Cancels and ends the conversation."""
@@ -187,10 +227,33 @@ def start_bot():
     # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher
 
+    disable_reminder_conv = ConversationHandler(
+        entry_points=[CommandHandler('disable_reminder', get_disable_reminder)],
+        states={
+            DISABLE_REMINDER : [MessageHandler(Filters.text & ~Filters.command, set_disable_reminder),],
+        },
+        fallbacks=[CommandHandler('back', back_to_reminder)],
+        map_to_parent={
+            END: REMINDER
+        }
+    )
+
     create_reminder_conv = ConversationHandler(
         entry_points=[CommandHandler('create_reminder', get_create_reminder)],
         states={
-            CREATE_REMINDER : [MessageHandler(Filters.text & ~Filters.command, set_create_reminder), ],
+            CREATE_REMINDER : [MessageHandler(Filters.text & ~Filters.command, set_create_reminder),],
+        },
+        fallbacks=[CommandHandler('back', back_to_reminder)],
+        map_to_parent={
+            END: REMINDER
+        }
+    )
+
+    list_reminder_conv = ConversationHandler(
+        entry_points=[CommandHandler('list_reminder', list_reminder)],
+        states={
+            CREATE_REMINDER : [CommandHandler('create_reminder', get_create_reminder)],
+            DISABLE_REMINDER : [CommandHandler('disable_reminder', get_disable_reminder)]
         },
         fallbacks=[CommandHandler('back', back_to_reminder)],
         map_to_parent={
@@ -201,7 +264,7 @@ def start_bot():
     reminder_conv = ConversationHandler(
         entry_points=[CommandHandler('reminder', reminder)],
         states={
-            REMINDER : [CommandHandler('list_reminder', list_reminder), CommandHandler('disable_reminder', disable_reminder), create_reminder_conv],
+            REMINDER : [list_reminder_conv, disable_reminder_conv, create_reminder_conv],
         },
         fallbacks=[CommandHandler('back', back_to_main)],
         map_to_parent={
@@ -220,13 +283,24 @@ def start_bot():
         }
     )
 
+    support_conv = ConversationHandler(
+        entry_points=[CommandHandler('support', support)],
+        states={
+            SUPPORT : [MessageHandler(Filters.text & ~Filters.command, dummy_convo)],
+        },
+        fallbacks=[CommandHandler('back', back_to_main)],
+        map_to_parent={
+            END: MAIN_SELECTION
+        }
+    )
+
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            MAIN_SELECTION: [reminder_conv, search_conv],
+            MAIN_SELECTION: [reminder_conv, search_conv, support_conv],
             STOPPING: [CommandHandler("start", start)]
         },
-        fallbacks=[CommandHandler("stop", stop)]
+        fallbacks=[CommandHandler("stop", stop),]
     )
 
     dispatcher.add_handler(conv_handler)
