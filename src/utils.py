@@ -1,5 +1,12 @@
 import pytz
+import dateutil.parser
 from datetime import datetime, timedelta
+
+def get_datetime_tz():
+    return datetime.now(pytz.timezone('Asia/Singapore'))
+
+def get_datetime_from_str(datetime_str : str):
+    return dateutil.parser.parse(datetime_str)
 
 def get_nearest_hour():
     t = datetime.now(pytz.timezone('Asia/Singapore'))

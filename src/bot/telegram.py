@@ -44,7 +44,11 @@ def sale_reminder(context: CallbackContext):
 Name : {} \nOriginal Price : {} \nDiscount Price : {} \nSale Time : {} \nLink : {}
                 """.format(item.item_name, item.item_original_price, item.item_discount_price, item.item_sale_time, item.item_url)
                 
-                context.bot.send_message(chat_id=context.job.context, text=text)
+                current_time = utils.get_datetime_tz()
+                sale_time = get_datetime_from_str(item.item_sale_time)
+                
+                if sale_time > current_time and current_time < sale_time + datetime.timedelta(hours=1):
+                    context.bot.send_message(chat_id=context.job.context, text=text)
 
 def start(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
