@@ -22,7 +22,7 @@ def create_items(db : Session):
                 if existing_item:
                     item = existing_item
                     item.item_discount_price = j["discounted_price"]
-                    
+
                 else:
                     item = models.Item(
                         item_name = j["name"],
@@ -87,7 +87,7 @@ def create_reminder(db : Session, username : str, keyword : str):
 
 def get_item(db : Session, search_keyword : str = None):
     try:
-        item = db.query(models.Item).filter(models.Item.item_sale_time >= str(datetime.datetime.now()))
+        item = db.query(models.Item).filter(models.Item.item_sale_time >= str(datetime.datetime.now().date()))
 
         if search_keyword:
             item = item.filter(models.Item.item_name.contains(search_keyword))
