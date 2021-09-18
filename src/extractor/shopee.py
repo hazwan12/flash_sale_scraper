@@ -1,4 +1,5 @@
 import time
+import pytz
 import datetime
 import dateutil.parser
 from selenium import webdriver
@@ -51,12 +52,12 @@ class Shopee(base.Base):
             sale_time = self.driver.find_element_by_xpath(flashsale_time_xpath).text
 
             if sale_day.upper() == 'TOMORROW':
-                date = str(datetime.date.today() + datetime.timedelta(days=1))
+                date = str(datetime.datetime.now(pytz.timezone('Asia/Singapore')).date() + datetime.timedelta(days=1))
                 date_time = date + " " + sale_time
                 sale_datetime = str(dateutil.parser.parse(date_time))
 
             else:
-                date = str(datetime.date.today())
+                date = str(datetime.datetime.now(pytz.timezone('Asia/Singapore')).date())
                 date_time = date + " " + sale_time
                 sale_datetime = str(dateutil.parser.parse(date_time))
                 
