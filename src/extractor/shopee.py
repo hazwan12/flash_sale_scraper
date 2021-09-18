@@ -15,7 +15,7 @@ class Shopee(base.Base):
     def get_content(self):
         print("Accessing Shopee")
         self.driver.get("https://shopee.sg/flash_deals")
-        time.sleep(15)
+        time.sleep(10)
 
         # ## Click Close on Popup Button 
         # print("Looking for Ad Popup")
