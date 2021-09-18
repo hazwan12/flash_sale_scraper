@@ -76,9 +76,11 @@ Welcome to the Flash Sales Bot {}
     context.bot.send_message(chat_id=chat_id, text=start_message)
 
     active_jobs = context.job_queue.get_jobs_by_name(str(chat_id))
-    
-    if not active_jobs:
-        context.job_queue.run_repeating(callback=sale_reminder, interval=3600, name=str(chat_id), context=chat_id, first=utils.get_nearest_hour_add_10mins())
+    if active_jobs:
+        for job in active_jobs:
+            job.schedule_removal()
+
+    context.job_queue.run_repeating(callback=sale_reminder, interval=3600, name=str(chat_id), context=chat_id, first=utils.get_nearest_hour_add_10mins())
 
     return MAIN_SELECTION
 
