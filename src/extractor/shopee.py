@@ -37,7 +37,7 @@ class Shopee(base.Base):
 
     def paginate(self):
         print("Get Flash Sales Pagination")
-        pagination = set([i.get_attribute('href') for i in self.driver.find_elements_by_xpath("//li[@class='image-carousel__item']//a")])
+        pagination = list(set([i.get_attribute('href') for i in self.driver.find_elements_by_xpath("//li[@class='image-carousel__item']//a")]))[::-1]
 
         all_items = []
         for i in pagination:
