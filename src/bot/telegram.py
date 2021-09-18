@@ -47,7 +47,7 @@ def sale_reminder(context: CallbackContext):
 Name : {} \nOriginal Price : {} \nDiscount Price : {} \nSale Time : {} \nLink : {}
                 """.format(item.item_name, item.item_original_price, item.item_discount_price, item.item_sale_time, item.item_url)
                 
-                current_time = utils.get_datetime_tz()
+                current_time = utils.get_datetime_from_str(str(utils.get_datetime_tz()).split(".")[0])
                 sale_time = utils.get_datetime_from_str(item.item_sale_time)
                 
                 if sale_time > current_time and current_time < sale_time + datetime.timedelta(hours=1):
