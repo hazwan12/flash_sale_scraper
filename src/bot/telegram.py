@@ -36,9 +36,11 @@ END = ConversationHandler.END
 def sale_reminder(context: CallbackContext):
     logger.info("Searching reminders for chat_id %s", context.job.context)
     reminders = crud.get_reminders(SessionLocal(), context.job.context)
-
+    
+    sale_items = []
+    
     if len(reminders) > 0:
-        context.bot.send_message(chat_id=context.job.context, text="Reminder on Items on Sale")
+        
         for reminder in reminders:
             for item in crud.get_items_on_sale(SessionLocal(), reminder.keyword):
                 text = """
@@ -49,7 +51,12 @@ Name : {} \nOriginal Price : {} \nDiscount Price : {} \nSale Time : {} \nLink : 
                 sale_time = utils.get_datetime_from_str(item.item_sale_time)
                 
                 if sale_time > current_time and current_time < sale_time + datetime.timedelta(hours=1):
-                    context.bot.send_message(chat_id=context.job.context, text=text)
+                    sale_items.append(text)
+
+    if len(sale_items) > 0:
+        context.bot.send_message(chat_id=context.job.context, text="Reminder on Items on Sale")
+        for text in sale_items:
+            context.bot.send_message(chat_id=context.job.context, text=text)
 
 def start(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
