@@ -4,7 +4,7 @@ import logging
 from dotenv import load_dotenv
 
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext, CallbackQueryHandler, PicklePersistence
 
 from .. import utils
 
@@ -240,7 +240,8 @@ def stop(update: Update, context: CallbackContext) -> int:
 
 def start_bot():
     # Create the Updater and pass it your bot's token.
-    updater = Updater(token=BOT_TOKEN)
+    persistence = PicklePersistence(filename='flash_sale_concierge')
+    updater = Updater(token=BOT_TOKEN, persistence=persistence)
 
     # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher
@@ -253,7 +254,9 @@ def start_bot():
         fallbacks=[CommandHandler('back', back_to_reminder)],
         map_to_parent={
             END: REMINDER
-        }
+        },
+        name="disable_reminder_conv",
+        persistent=True,
     )
 
     create_reminder_conv = ConversationHandler(
@@ -264,7 +267,9 @@ def start_bot():
         fallbacks=[CommandHandler('back', back_to_reminder)],
         map_to_parent={
             END: REMINDER
-        }
+        },
+        name="create_reminder_conv",
+        persistent=True,
     )
 
     list_reminder_conv = ConversationHandler(
@@ -276,7 +281,9 @@ def start_bot():
         fallbacks=[CommandHandler('back', back_to_reminder)],
         map_to_parent={
             END: REMINDER
-        }
+        },
+        name="list_reminder_conv",
+        persistent=True,
     )
 
     reminder_conv = ConversationHandler(
@@ -287,7 +294,9 @@ def start_bot():
         fallbacks=[CommandHandler('back', back_to_main)],
         map_to_parent={
             END: MAIN_SELECTION
-        }
+        },
+        name="reminder_conv",
+        persistent=True,
     )
 
     search_conv = ConversationHandler(
@@ -298,7 +307,9 @@ def start_bot():
         fallbacks=[CommandHandler('back', back_to_main)],
         map_to_parent={
             END: MAIN_SELECTION
-        }
+        },
+        name="search_conv",
+        persistent=True,
     )
 
     support_conv = ConversationHandler(
@@ -309,7 +320,9 @@ def start_bot():
         fallbacks=[CommandHandler('back', back_to_main)],
         map_to_parent={
             END: MAIN_SELECTION
-        }
+        },
+        name="support_conv",
+        persistent=True,
     )
 
     conv_handler = ConversationHandler(
@@ -318,7 +331,9 @@ def start_bot():
             MAIN_SELECTION: [reminder_conv, search_conv, support_conv],
             STOPPING: [CommandHandler("start", start)]
         },
-        fallbacks=[CommandHandler("stop", stop),]
+        fallbacks=[CommandHandler("stop", stop),],
+        name="main_conv",
+        persistent=True,
     )
 
     dispatcher.add_handler(conv_handler)
