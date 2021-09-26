@@ -1,5 +1,4 @@
 import time
-import pytz
 import datetime
 import dateutil.parser
 from selenium import webdriver
@@ -15,7 +14,7 @@ class Shopee(base.Base):
     def get_content(self):
         print("Accessing Shopee")
         self.driver.get("https://shopee.sg/flash_deals")
-        time.sleep(10)
+        #time.sleep(5)
 
         # ## Click Close on Popup Button 
         # print("Looking for Ad Popup")
@@ -42,7 +41,7 @@ class Shopee(base.Base):
         all_items = []
         for i in pagination:
             self.driver.get(i)
-            time.sleep(5)
+            #time.sleep(5)
             
             flashsale_selected_xpath = "//a[@class='flash-sale-session flash-sale-session--selected']"
             flashsale_time_xpath = "{}//div[@class='flash-sale-session__display-hour']".format(flashsale_selected_xpath)
@@ -52,12 +51,12 @@ class Shopee(base.Base):
             sale_time = self.driver.find_element_by_xpath(flashsale_time_xpath).text
 
             if sale_day.upper() == 'TOMORROW':
-                date = str(datetime.datetime.now(pytz.timezone('Asia/Singapore')).date() + datetime.timedelta(days=1))
+                date = str(datetime.datetime.now().date() + datetime.timedelta(days=1))
                 date_time = date + " " + sale_time
                 sale_datetime = str(dateutil.parser.parse(date_time))
 
             else:
-                date = str(datetime.datetime.now(pytz.timezone('Asia/Singapore')).date())
+                date = str(datetime.datetime.now().date())
                 date_time = date + " " + sale_time
                 sale_datetime = str(dateutil.parser.parse(date_time))
                 
