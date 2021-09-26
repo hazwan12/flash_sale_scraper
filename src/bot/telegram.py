@@ -43,15 +43,12 @@ def sale_reminder(context: CallbackContext):
         
         for reminder in reminders:
             for item in crud.get_items_on_sale(SessionLocal(), reminder.keyword):
+
                 text = """
 Name : {} \nOriginal Price : {} \nDiscount Price : {} \nSale Time : {} \nLink : {}
                 """.format(item.item_name, item.item_original_price, item.item_discount_price, item.item_sale_time, item.item_url)
-                
-                current_time = utils.get_datetime_from_str(str(utils.get_datetime_tz()).split(".")[0])
-                sale_time = utils.get_datetime_from_str(item.item_sale_time)
-                
-                if sale_time > current_time and current_time < sale_time + datetime.timedelta(hours=1):
-                    sale_items.append(text)
+
+                sale_items.append(text)
 
     if len(sale_items) > 0:
         context.bot.send_message(chat_id=context.job.context, text="Reminder on Items on Sale")
@@ -76,11 +73,10 @@ Welcome to the Flash Sales Bot {}
     context.bot.send_message(chat_id=chat_id, text=start_message)
 
     active_jobs = context.job_queue.get_jobs_by_name(str(chat_id))
-    if active_jobs:
-        for job in active_jobs:
-            job.schedule_removal()
-
-    context.job_queue.run_repeating(callback=sale_reminder, interval=3600, name=str(chat_id), context=chat_id, first=utils.get_nearest_hour_add_10mins())
+    if not active_jobs:
+        #for job in active_jobs:
+        #    job.schedule_removal()
+        context.job_queue.run_repeating(callback=sale_reminder, interval=3600, name=str(chat_id), context=chat_id, first=utils.get_nearest_hour_add_10mins())
 
     return MAIN_SELECTION
 
@@ -337,6 +333,16 @@ def start_bot():
     )
 
     dispatcher.add_handler(conv_handler)
+    
+    # Add job queues to existing users once bot restarts
+    users = crud.get_users(SessionLocal())
+    for user in users:
+        print("Reinstating Job Queue for User : {}".format(user.username))
+        updater.job_queue.run_repeating(
+            callback=sale_reminder, interval=3600, 
+            name=str(user.chat_id), context=user.chat_id, 
+            first=utils.get_nearest_hour_add_10mins()
+        )
     
     # Start the Bot
     updater.start_polling()
