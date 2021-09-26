@@ -12,9 +12,9 @@ from ..sql import crud
 from ..sql.database import SessionLocal
 
 # Enable logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+#logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("src.bot.telegram")
 
 load_dotenv()
 
@@ -84,6 +84,9 @@ def dummy_convo(update: Update, context: CallbackContext):
     pass
 
 def support(update: Update, context: CallbackContext):
+    username = update["message"]["chat"]["username"]
+    logger.info("User %s initiated support conversation", username)
+
     context.bot.send_photo(chat_id=update.effective_chat.id, photo=open("paynow.jpg", "rb"))
     context.bot.send_message(chat_id=update.effective_chat.id, text="""
 Like the app? Show your appreciation by donating to my PayNow.
@@ -95,7 +98,7 @@ Any amount helps as this will be primarily used to pay the cost hosting this.
 
 def get_search_keyword(update: Update, context: CallbackContext):
     user = update.message.from_user
-    logger.info("User %s initiated search", user.username)
+    logger.info("User %s initiated search by keyword", user.username)
     update.message.reply_text("Please provide a keyword of the item you want to search else /back to main menu")
 
     return SEARCH
@@ -104,7 +107,7 @@ def set_search_keyword(update: Update, context: CallbackContext):
     user = update.message.from_user
     logger.info("User %s is searching for %s", user.username, update.message.text)
 
-    if len(update.message.text) <= 3:
+    if len(update.message.text) <= 2:
         update.message.reply_text("Please provide a keyword longer then 3 characters")
 
     else:
@@ -129,7 +132,7 @@ def set_search_keyword(update: Update, context: CallbackContext):
 
 def reminder(update: Update, context: CallbackContext):
     user = update.message.from_user
-    logger.info("User %s initiated reminder", user.username)
+    logger.info("User %s initiated reminder conversation", user.username)
     
     update.message.reply_text("""
 - To list all your reminders /list_reminder
@@ -142,7 +145,7 @@ def reminder(update: Update, context: CallbackContext):
 
 def get_create_reminder(update: Update, context: CallbackContext):
     user = update.message.from_user
-    logger.info("User %s creating reminder", user.username)
+    logger.info("User %s is creating a reminder", user.username)
     update.message.reply_text("""
 Please provide the keyword you want to set a reminder for 
 Else /back to main menu
@@ -152,7 +155,7 @@ Else /back to main menu
 
 def set_create_reminder(update: Update, context: CallbackContext):
     user = update.message.from_user
-    logger.info("User %s is creating reminder for %s", user.username, update.message.text)
+    logger.info("User %s is creating reminder for keyword %s", user.username, update.message.text)
 
     status = crud.create_reminder(SessionLocal(), user.username, update.message.text)
     update.message.reply_text(status)
@@ -188,7 +191,7 @@ There are no reminders currently for your account
 
 def get_disable_reminder(update: Update, context: CallbackContext):
     user = update.message.from_user
-    logger.info("User %s disabling reminder", user.username)
+    logger.info("User %s is disabling a reminder", user.username)
 
     text = "No Reminders Set"
     reminders = crud.get_reminders(SessionLocal(), update.effective_chat.id)
@@ -205,7 +208,7 @@ Else /back to the reminder menu
 
 def set_disable_reminder(update: Update, context: CallbackContext):
     user = update.message.from_user
-    logger.info("User %s is disabling reminder for %s", user.username, update.message.text)
+    logger.info("User %s is disabling reminder for keyword %s", user.username, update.message.text)
 
     status = crud.disable_reminder(SessionLocal(), user.username, update.message.text)
     update.message.reply_text(status)
@@ -213,12 +216,16 @@ def set_disable_reminder(update: Update, context: CallbackContext):
     return get_disable_reminder(update, context)
 
 def back_to_main(update: Update, context: CallbackContext):
+    user = update.message.from_user
+    logger.info("User %s is navigating back to main conversation", user.username)
     context.user_data[START_OVER] = True
     start(update, context)
 
     return END
 
 def back_to_reminder(update: Update, context: CallbackContext):
+    user = update.message.from_user
+    logger.info("User %s is navigating back to reminder conversation", user.username)
     context.user_data[START_OVER] = True
     reminder(update, context)
 
@@ -337,7 +344,7 @@ def start_bot():
     # Add job queues to existing users once bot restarts
     users = crud.get_users(SessionLocal())
     for user in users:
-        print("Reinstating Job Queue for User : {}".format(user.username))
+        logger.info("Reinstating Job Queue for User : {}".format(user.username))
         updater.job_queue.run_repeating(
             callback=sale_reminder, interval=3600, 
             name=str(user.chat_id), context=user.chat_id, 
