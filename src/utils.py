@@ -9,7 +9,7 @@ def get_datetime_from_str(datetime_str : str):
     return dateutil.parser.parse(datetime_str)
 
 def get_prev_hour():
-    return datetime.datetime.now().replace(microsecond=0, second=0, minute=0)
+    return datetime.now().replace(microsecond=0, second=0, minute=0)
 
 def get_nearest_hour():
     t = datetime.now()
