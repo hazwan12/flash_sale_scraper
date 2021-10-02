@@ -146,10 +146,8 @@ def disable_reminder(db : Session, username : str, keyword : str):
 
 def get_items_on_sale(db : Session, keyword : str):
     try:
-        current_date = utils.get_nearest_hour()
         item = db.query(models.Item)\
-                .filter(models.Item.item_sale_time >= str(current_date))\
-                .filter(models.Item.item_sale_time <= str(current_date))\
+                .filter(models.Item.item_sale_time == str(utils.get_prev_hour()))\
                 .filter(models.Item.item_name.contains(keyword))\
                 .all()
 
@@ -161,3 +159,14 @@ def get_items_on_sale(db : Session, keyword : str):
 
     return item
 
+def get_users(db : Session):
+    try:
+        user = db.query(models.User).all()
+
+    except Exception as e:
+        print(e)
+
+    finally:
+        db.close()
+
+    return user
