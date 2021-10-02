@@ -23,7 +23,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 MAIN_SELECTION, REMINDER_SELECTION = map(chr, range(2))
 
 # Stage Definition for Top Level Conversation
-SEARCH, REMINDER, REPORT, ABOUT, SUPPORT = map(chr, range(5))
+SEARCH, REMINDER, BUGREPORT, ABOUT, SUPPORT = map(chr, range(5))
 
 # State Definitions for Reminder Level Conversation
 LIST_REMINDER, DISABLE_REMINDER, CREATE_REMINDER = map(chr, range(3))
@@ -65,8 +65,9 @@ def start(update: Update, context: CallbackContext):
     start_message = """
 Welcome to the Flash Sales Bot {}
 
-- To search items on sale enter /search
-- To manage your reminders enter /reminder
+- To search items on sale: /search
+- To manage your reminders: /reminder
+- To make a bug report: /bug_report
 - To support the developer /support
     """.format(username)
 
@@ -95,6 +96,17 @@ Any amount helps as this will be primarily used to pay the cost hosting this.
 """)
 
     return CommandHandler('back', back_to_main)
+
+def bug_report(update : Update, context: CallbackContext):
+    username = update["message"]["chat"]["username"]
+    logger.info("User %s initiated bug report conversation", username)
+
+    context.bot.send_message(chat_id=update.effective_chat.id, text="""
+Please fill in the bug report form here : https://forms.gle/UAhJQpxKbmXwKULH8
+/back to main menu
+""")
+
+    return BUGREPORT
 
 def get_search_keyword(update: Update, context: CallbackContext):
     user = update.message.from_user
@@ -328,10 +340,24 @@ def start_bot():
         persistent=True,
     )
 
+    bugreport_conv = ConversationHandler(
+        entry_points=[CommandHandler('bug_report', bug_report)],
+        states={
+            BUGREPORT : [MessageHandler(Filters.text & ~Filters.command, dummy_convo)],
+        },
+        fallbacks=[CommandHandler('back', back_to_main)],
+        map_to_parent={
+            END: MAIN_SELECTION
+        },
+        name="bugreprot_conv",
+        persistent=True,
+    )
+
+
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            MAIN_SELECTION: [reminder_conv, search_conv, support_conv],
+            MAIN_SELECTION: [reminder_conv, search_conv, support_conv, bugreport_conv],
             STOPPING: [CommandHandler("start", start)]
         },
         fallbacks=[CommandHandler("stop", stop),],
