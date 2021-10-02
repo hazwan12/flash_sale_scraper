@@ -1,9 +1,13 @@
 import os
+import html
+import json
 import datetime
 import logging
+import traceback
+
 from dotenv import load_dotenv
 
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, ParseMode
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext, CallbackQueryHandler, PicklePersistence
 
 from .. import utils
@@ -19,6 +23,7 @@ logger = logging.getLogger("src.bot.telegram")
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+DEVELOPER_CHAT_ID = os.getenv("DEVELOPER_CHAT_ID")
 
 MAIN_SELECTION, REMINDER_SELECTION = map(chr, range(2))
 
@@ -253,6 +258,24 @@ def stop(update: Update, context: CallbackContext) -> int:
 
     return ConversationHandler.END
 
+def error_handler(update: object, context : CallbackContext):
+    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+    tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
+    tb_string = ''.join(tb_list)
+
+    update_str = update.to_dict() if isinstance(update, Update) else str(update)
+    message = (
+        f'An exception was raised while handling an update\n'
+        f'<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}'
+        '</pre>\n\n'
+        f'<pre>context.chat_data = {html.escape(str(context.chat_data))}</pre>\n\n'
+        f'<pre>context.user_data = {html.escape(str(context.user_data))}</pre>\n\n'
+        f'<pre>{html.escape(tb_string)}</pre>'
+    )
+
+    # Finally, send the message
+    context.bot.send_message(chat_id=DEVELOPER_CHAT_ID, text=message, parse_mode=ParseMode.HTML)
+
 def start_bot():
     # Create the Updater and pass it your bot's token.
     persistence = PicklePersistence(filename='flash_sale_concierge')
@@ -366,6 +389,7 @@ def start_bot():
     )
 
     dispatcher.add_handler(conv_handler)
+    dispatcher.add_error_handler(error_handler)
     
     # Add job queues to existing users once bot restarts
     users = crud.get_users(SessionLocal())
