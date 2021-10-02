@@ -149,7 +149,7 @@ def reminder(update: Update, context: CallbackContext):
     update.message.reply_text("""
 - To list all your reminders /list_reminder
 - To disable a reminder /disable_reminder
-- To create a new rminder /create_reminder
+- To create a new reminder /create_reminder
 - Back to main menu /back
     """)
 
