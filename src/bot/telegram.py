@@ -68,7 +68,7 @@ Welcome to the Flash Sales Bot {}
 - To search items on sale: /search
 - To manage your reminders: /reminder
 - To make a bug report: /bug_report
-- To support the developer /support
+- Like the app? Show your appreciation to the developer by: /support
     """.format(username)
 
     context.bot.send_message(chat_id=chat_id, text=start_message)
@@ -90,7 +90,7 @@ def support(update: Update, context: CallbackContext):
 
     context.bot.send_photo(chat_id=update.effective_chat.id, photo=open("paynow.jpg", "rb"))
     context.bot.send_message(chat_id=update.effective_chat.id, text="""
-Like the app? Show your appreciation by donating to my PayNow.
+If you like the idea of this app and find it useful, show your appreaciation by donating to my paynow.
 Any amount helps as this will be primarily used to pay the cost hosting this.
 /back to Main Menu
 """)
