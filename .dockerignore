@@ -1,0 +1,6 @@
+docs/
+notebooks/
+output/
+venv/
+
+*.md
