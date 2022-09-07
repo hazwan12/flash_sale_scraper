@@ -402,6 +402,8 @@ def start_bot():
         )
     
     # Start the Bot
-    updater.start_polling()
-
-    updater.idle()
+    updater.start_webhook(listen="0.0.0.0", port=8443, url_path=BOT_TOKEN)
+    updater.bot.setWebhook(f"https://test/{BOT_TOKEN}")
+    
+    ##updater.start_polling()
+    ##updater.idle()
