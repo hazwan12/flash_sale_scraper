@@ -402,6 +402,7 @@ def start_bot():
         )
     
     # Start the Bot
-    updater.start_polling()
-
-    updater.idle()
+    updater.start_webhook(listen="0.0.0.0", port=8443, url_path="https://flash-sale-concierge.herokuapp.com/" + BOT_TOKEN)
+    
+    ##updater.start_polling()
+    ##updater.idle()
