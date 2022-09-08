@@ -3,4 +3,5 @@ notebooks/
 output/
 venv/
 
+*.env
 *.md
