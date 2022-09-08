@@ -24,6 +24,7 @@ load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 DEVELOPER_CHAT_ID = os.getenv("DEVELOPER_CHAT_ID")
+PORT = os.getenv("PORT")
 
 MAIN_SELECTION, REMINDER_SELECTION = map(chr, range(2))
 
@@ -402,7 +403,12 @@ def start_bot():
         )
     
     # Start the Bot
-    updater.start_webhook(url_path="https://flash-sale-concierge.herokuapp.com/" + BOT_TOKEN)
+    updater.start_webhook(
+        listen="0.0.0.0"
+        , port=int(PORT)
+        , url_path=BOT_TOKEN
+        , url_path="https://flash-sale-concierge.herokuapp.com/" + BOT_TOKEN
+    )
     
-    ##updater.start_polling()
-    ##updater.idle()
+    # updater.start_polling()
+    # updater.idle()

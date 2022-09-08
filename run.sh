@@ -1,0 +1,2 @@
+docker build -f Dockerfile -t asia-southeast1-docker.pkg.dev/personal-project-330206/flash-sale-concierge/v1:latest .
+docker push asia-southeast1-docker.pkg.dev/personal-project-330206/flash-sale-concierge/v1:latest
