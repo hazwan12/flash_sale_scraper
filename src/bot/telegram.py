@@ -407,7 +407,7 @@ def start_bot():
         listen="0.0.0.0"
         , port=int(PORT)
         , url_path=BOT_TOKEN
-        , url_path="https://flash-sale-concierge.herokuapp.com/" + BOT_TOKEN
+        , webhook_url="https://flash-sale-concierge.herokuapp.com/" + BOT_TOKEN
     )
     
     # updater.start_polling()
