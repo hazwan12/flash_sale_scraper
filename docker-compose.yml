@@ -1,0 +1,12 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:14.5
+    env_file:
+      - .env
+    ports: 
+      - ${PGPORT}:${PGPORT}
+    volumes:
+      - flash-sale-concierge-db:/var/lib/postgresql/data
+volumes:
+  flash-sale-concierge-db:
