@@ -1,5 +1,7 @@
 import sys
 
+from dotenv import load_dotenv
+
 from src.bot import telegram
 from src.extractor import shopee
 from src.sql import models, crud
@@ -8,6 +10,8 @@ from src.sql.database import engine, SessionLocal
 import logging
 logger = logging.getLogger("main")
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+
+load_dotenv()
 
 models.Base.metadata.create_all(bind=engine)
 
