@@ -5,8 +5,6 @@ import datetime
 import logging
 import traceback
 
-from dotenv import load_dotenv
-
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, ParseMode
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext, CallbackQueryHandler, PicklePersistence
 
@@ -20,7 +18,6 @@ from ..sql.database import SessionLocal
 
 logger = logging.getLogger("src.bot.telegram")
 
-load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 DEVELOPER_CHAT_ID = os.getenv("DEVELOPER_CHAT_ID")
